@@ -1,105 +1,85 @@
 #include <Arduino.h>
-#include <ESP8266MQTTMesh.h>
+#include <Adafruit_NeoPixel.h>
 
-#include "config.hpp"
-#include "led.hpp"
-#include "wifi.hpp"
+#define NUM_ROWS 10
+#define NUM_COLS 10
 
+Adafruit_NeoPixel strips[NUM_COLS] = {
+  Adafruit_NeoPixel(NUM_ROWS, 5, NEO_GRBW + NEO_KHZ800),
+  Adafruit_NeoPixel(NUM_ROWS, 4, NEO_GRBW + NEO_KHZ800),
+  Adafruit_NeoPixel(NUM_ROWS, 0, NEO_GRBW + NEO_KHZ800),
+  Adafruit_NeoPixel(NUM_ROWS, 2, NEO_GRBW + NEO_KHZ800),
+  Adafruit_NeoPixel(NUM_ROWS, 14, NEO_GRBW + NEO_KHZ800)
+};
 
+void setup()
+{
+  Serial.begin(115200);
 
-#define NETWORK_PASSWORD ""
-#define NETWORK_LIST { \
-	WIFI_CONN("kassel.freifunk.net", NETWORK_PASSWORD, NULL, 0), \
-        NULL, \
-        }
-#define MESH_PASSWORD    "esp8266_sensor_mesh"
-#define MQTT_SERVER      "10.54.42.226"
-#define MQTT_PORT        1883
-
-
-
-// Mesh config
-#define      FIRMWARE_ID        0x1337
-#define      FIRMWARE_VER       "0.1"
-wifi_conn    networks[]       = NETWORK_LIST;
-const char*  mesh_password    = MESH_PASSWORD;
-const char*  mqtt_server      = MQTT_SERVER;
-const int    mqtt_port        = MQTT_PORT;
-
-String ID  = String(ESP.getChipId());
-
-unsigned long previousMillis = 0;
-const long interval = 5000;
-int cnt = 0;
-
-// Note: All of the '.set' options below are optional.  The default values can be
-// found in ESP8266MQTTMeshBuilder.h
-ESP8266MQTTMesh mesh = ESP8266MQTTMesh::Builder(networks, mqtt_server, mqtt_port)
-                       .setVersion(FIRMWARE_VER, FIRMWARE_ID)
-                       .setMeshPassword(mesh_password)
-                       .build();
-
-
-Led led(1);
-// Wifi wifi(SSID, PASSWORD);
-
-String handleRequest(String request) {
-    return "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML>\r\n<html>\r\Hello";
+  for (int i = 0; i < NUM_COLS; i++) {
+    strips[i].begin();
+  }
 }
 
-void callback(const char *topic, const char *msg) {
-    if (0 == strcmp(topic, (const char*) ID.c_str())) {
-        if(String(msg) == "0") {
-            led.setLed(0, CRGBW(0, 0, 0, 0));
-        } else if(String(msg) == "1") {
-            led.setLed(0, CRGBW(255, 0, 0, 0));
-        }
-        led.update();
-    //     digitalWrite(LED_PIN, HIGH);
-    //   }else{
-    //     digitalWrite(LED_PIN, LOW);
-    //   }
+int charToInt(char c) {
+  switch (c) {
+    case '0': return 0x0;
+    case '1': return 0x1;
+    case '2': return 0x2;
+    case '3': return 0x3;
+    case '4': return 0x4;
+    case '5': return 0x5;
+    case '6': return 0x6;
+    case '7': return 0x7;
+    case '8': return 0x8;
+    case '9': return 0x9;
+    case 'A': return 0xA;
+    case 'B': return 0xB;
+    case 'C': return 0xC;
+    case 'D': return 0xD;
+    case 'E': return 0xE;
+    case 'F': return 0xF;
+  }
+  return 0;
+}
 
+void setPixel(int pos, String color)
+{
+  int col = pos % NUM_COLS;
+  int row = pos / NUM_COLS;
+
+  int r = charToInt(color.charAt(0)) << 4 | charToInt(color.charAt(1));
+  int g = charToInt(color.charAt(2)) << 4 | charToInt(color.charAt(3));
+  int b = charToInt(color.charAt(4)) << 4 | charToInt(color.charAt(5));
+
+  strips[col].setPixelColor(NUM_ROWS - 1 - row, r, g, b, 0);
+}
+
+void loop()
+{
+  String received = Serial.readStringUntil(';');
+  String cmd = received.substring(0, 3);
+  String payload = received.substring(3);
+
+
+  if (cmd.equals("SET"))
+  {
+    int pos = 0;
+    while (true)
+    {
+      int offset = pos * 6;
+      if (payload.length() < offset + 6)
+      {
+        break;
+      }
+
+      String color = payload.substring(offset, offset + 6);
+      setPixel(pos, color);
+      pos++;
     }
-}
 
-void setup() {
-    Serial.begin(115200);
-    delay(1000);
-
-    led.setup();
-    // wifi.setup();
-
-    // wifi.handler = &handleRequest;
-
-    // setup mesh
-    mesh.setCallback(callback);
-    mesh.begin();
-}
-
-void loop() {
-    // wifi.loop();
-
-    // led.setLed(0, CRGBW(255, 0, 0, 0));
-    // led.update();
-    // delay(1000);
-
-    // led.setLed(0, CRGBW(0, 0, 0, 0));
-    // led.update();
-    // delay(1000);
-
-    if (! mesh.connected())
-        return;
-
-    unsigned long currentMillis = millis();
-
-    // if (currentMillis - previousMillis >= interval) {
-
-    //     String cntStr = String(cnt);
-    //     String msg = "hello from " + ID + " cnt: " + cntStr;
-    //     mesh.publish(ID.c_str(), msg.c_str());
-    //     previousMillis = currentMillis;
-    //     cnt++;
-
-    // }
+    for (int i = 0; i < NUM_COLS; i++) {
+      strips[i].show();
+    }
+  }
 }
