@@ -20,7 +20,7 @@ function bw() {
 SerialPort.list()
   .then(ports => {
     return ports
-      .filter(port => port.comName.startsWith("/dev/tty.wchusbserial"))
+      .filter(port => port.comName.startsWith("/dev/tty.wchusbserial") || port.comName.startsWith("/dev/ttyUSB"))
       .map(port => new SerialPort(port.comName, { baudRate: 2000000 }));
   })
   .then(coms => {
