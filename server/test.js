@@ -1,5 +1,5 @@
 const SerialPort = require("serialport");
-
+const { flatMap, unzip, chunk, flatten } = require("lodash");
 const HEIGHT = 10;
 const WIDTH = 10;
 
@@ -25,41 +25,22 @@ SerialPort.list()
   })
   .then(coms => {
     setInterval(() => {
-      coms.forEach(com => {
-        //   // com.on('data', (data) => {
-        //   //   console.log(data.toString());
-        //   // });
-        //   com.write(
-        //     "SETFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;"
-        //   );
-        //   setTimeout(() => {
-        //     com.write(
-        //       "SET000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000;"
-        //     );
-        //   }, 0);
-        //   // com.write("SETFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FF;");
-        // });
+      // let initPixels = Array(HEIGHT).fill(Array(WIDTH).fill([0, 0, 0]));
 
-        let initPixels = Array(HEIGHT).fill(Array(WIDTH).fill([0, 0, 0]));
+      // const initPixels = Array(HEIGHT).fill(0).map(() => Array(WIDTH).fill(0).map(() => [0, 0, 0]));
 
-        initPixels[1][0] = [255, 255, 255];
+      // initPixels[9][9] = [255, 255, 255];
+      const initPixels = Array(HEIGHT).fill(0).map(() => Array(WIDTH).fill(0).map(() => [randColor(), randColor(), randColor()]));
+      // const initPixels = Array(HEIGHT).fill(0).map(() => Array(WIDTH).fill(0).map(() => bw()));
 
-        // const initPixels = Array(HEIGHT).fill(0).map(() => Array(WIDTH).fill(0).map(() => [randColor(), randColor(), randColor()]));
-        // const initPixels = Array(HEIGHT).fill(0).map(() => Array(WIDTH).fill(0).map(() => bw()));
-        const payload = initPixels
-          .map(row =>
-            row
-              .map(
-                color =>
-                  `${toHex(color[0])}${toHex(color[1])}${toHex(color[2])}`
-              )
-              .join("")
-          )
-          .join("");
-        // console.log(payload);
-        com.write(`SET${payload};`);
-      });
-    }, 150);
+      const flatPixels = flatten(initPixels);
+      const chunks = chunk(flatPixels, 5);
+
+      const first = chunks.filter((_, i) => i % 2 === 0);
+      const second = chunks.filter((_, i) => i % 2 === 1);
+      coms[1].write(`SET${flatten(first).map(color => `${toHex(color[0])}${toHex(color[1])}${toHex(color[2])}`).join('')};`);
+      coms[0].write(`SET${flatten(second).map(color => `${toHex(color[0])}${toHex(color[1])}${toHex(color[2])}`).join('')};`);
+    }, 200);
   });
 // const com = new SerialPort('/dev/tty.wchusbserial1442110', { baudRate: 115200, autoOpen: false });
 
