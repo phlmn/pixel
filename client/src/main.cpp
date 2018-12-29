@@ -2,7 +2,7 @@
 #include <Adafruit_NeoPixel.h>
 
 #define NUM_ROWS 10
-#define NUM_COLS 10
+#define NUM_COLS 5
 
 Adafruit_NeoPixel strips[NUM_COLS] = {
   Adafruit_NeoPixel(NUM_ROWS, 5, NEO_GRBW + NEO_KHZ800),
@@ -14,7 +14,7 @@ Adafruit_NeoPixel strips[NUM_COLS] = {
 
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(2000000);
 
   for (int i = 0; i < NUM_COLS; i++) {
     strips[i].begin();
@@ -39,6 +39,12 @@ int charToInt(char c) {
     case 'D': return 0xD;
     case 'E': return 0xE;
     case 'F': return 0xF;
+    case 'a': return 0xA;
+    case 'b': return 0xB;
+    case 'c': return 0xC;
+    case 'd': return 0xD;
+    case 'e': return 0xE;
+    case 'f': return 0xF;
   }
   return 0;
 }
@@ -58,6 +64,7 @@ void setPixel(int pos, String color)
 void loop()
 {
   String received = Serial.readStringUntil(';');
+  Serial.println(received);
   String cmd = received.substring(0, 3);
   String payload = received.substring(3);
 
