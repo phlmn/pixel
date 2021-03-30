@@ -4,12 +4,19 @@
 #define NUM_ROWS 10
 #define NUM_COLS 5
 
+long iter = 0;
+// D8
+// D7
+// D6
+// D5
+// D0
+
 Adafruit_NeoPixel strips[NUM_COLS] = {
-  Adafruit_NeoPixel(NUM_ROWS, 5, NEO_GRBW + NEO_KHZ800),
-  Adafruit_NeoPixel(NUM_ROWS, 4, NEO_GRBW + NEO_KHZ800),
-  Adafruit_NeoPixel(NUM_ROWS, 0, NEO_GRBW + NEO_KHZ800),
-  Adafruit_NeoPixel(NUM_ROWS, 2, NEO_GRBW + NEO_KHZ800),
-  Adafruit_NeoPixel(NUM_ROWS, 14, NEO_GRBW + NEO_KHZ800)
+  Adafruit_NeoPixel(NUM_ROWS, D8, NEO_GRBW + NEO_KHZ400),
+  Adafruit_NeoPixel(NUM_ROWS, D7, NEO_GRBW + NEO_KHZ400),
+  Adafruit_NeoPixel(NUM_ROWS, D6, NEO_GRBW + NEO_KHZ400),
+  Adafruit_NeoPixel(NUM_ROWS, D5, NEO_GRBW + NEO_KHZ400),
+  Adafruit_NeoPixel(NUM_ROWS, D0, NEO_GRBW + NEO_KHZ400)
 };
 
 void setup()
@@ -63,30 +70,39 @@ void setPixel(int pos, String color)
 
 void loop()
 {
-  String received = Serial.readStringUntil(';');
-  Serial.println(received);
-  String cmd = received.substring(0, 3);
-  String payload = received.substring(3);
+  // String received = Serial.readStringUntil(';');
+  // Serial.println(received);
+  // String cmd = received.substring(0, 3);
+  // String payload = received.substring(3);
 
 
-  if (cmd.equals("SET"))
-  {
-    int pos = 0;
-    while (true)
-    {
-      int offset = pos * 6;
-      if (payload.length() < offset + 6)
-      {
-        break;
-      }
+  // if (cmd.equals("SET"))
+  // {
+    // int pos = 0;
+    // while (true)
+    // {
+    //   int offset = pos * 6;
+    //   if (payload.length() < offset + 6)
+    //   {
+    //     break;
+    //   }
 
-      String color = payload.substring(offset, offset + 6);
-      setPixel(pos, color);
-      pos++;
-    }
+    //   String color = payload.substring(offset, offset + 6);
+    //   setPixel(pos, color);
+    //   pos++;
+    // }
+
+
+    int color = (sin(iter / 10.0) / 2.0 + 0.5) * 0xFF;
 
     for (int i = 0; i < NUM_COLS; i++) {
+      for (int x = 0; x < 9; x++) {
+        strips[i].setPixelColor(x, color, color, color, 0);
+      }
       strips[i].show();
+      delay(10);
     }
-  }
+
+    iter++;
+  // }
 }
